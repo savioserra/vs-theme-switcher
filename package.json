@@ -654,6 +654,7 @@
   },
   "devDependencies": {
     "@types/glob": "^7.1.1",
+    "@types/lodash": "^4.14.148",
     "@types/mocha": "^5.2.7",
     "@types/moment-timezone": "^0.5.12",
     "@types/node": "^12.11.7",
@@ -668,6 +669,7 @@
     "webpack-cli": "^3.3.10"
   },
   "dependencies": {
+    "lodash": "^4.17.15",
     "moment": "^2.24.0",
     "moment-timezone": "^0.5.27"
   }

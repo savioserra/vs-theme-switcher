@@ -5,12 +5,16 @@ import ThemeScheduler from "./ThemeScheduler";
 const scheduler = new ThemeScheduler();
 
 export async function activate(context: code.ExtensionContext) {
-  setup();
+  refresh();
 
-  code.workspace.onDidChangeConfiguration(setup);
+  code.workspace.onDidChangeConfiguration(({ affectsConfiguration }) => {
+    if (affectsConfiguration(ConfigurationManager.MAPPINGS_CONFIGURATION)) {
+      refresh();
+    }
+  });
 }
 
-function setup() {
+function refresh() {
   const mappings = ConfigurationManager.getMappings();
 
   if (mappings) {

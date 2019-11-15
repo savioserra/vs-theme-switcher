@@ -4,7 +4,7 @@ This extension enables you to define which time which theme should be activated!
 
 ![preview](https://raw.githubusercontent.com/savioserra/vs-theme-switcher/master/assets/preview.gif)
 
-## How Setup Themes
+## How To Setup Themes
 
 For the extension to work, the only thing you need to do is to set in your VSCode settings the mappings you want, like this:
 
