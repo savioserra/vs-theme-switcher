@@ -1,7 +1,8 @@
-# ![icon](assets/icon.png) Theme Switcher
+# ![icon](https://raw.githubusercontent.com/savioserra/vs-theme-switcher/master/assets/icon.png) Theme Switcher
+
 This extension enables you to define which time which theme should be activated!
 
-![preview](assets/preview.gif)
+![preview](https://raw.githubusercontent.com/savioserra/vs-theme-switcher/master/assets/preview.gif)
 
 ## How Setup Themes
 
@@ -29,10 +30,13 @@ For the extension to work, the only thing you need to do is to set in your VSCod
 ```
 
 ## Extension Settings
+
 This extension contributes the following settings:
+
 - `themeswitcher.mappings`: Array of mappings
 
 ## Credits
+
 - Icon made by [Pixel Perfect](https://www.flaticon.com/br/autores/pixel-perfect) from [www.flaticon.com](https://www.flaticon.com)
 
 **Enjoy!**
