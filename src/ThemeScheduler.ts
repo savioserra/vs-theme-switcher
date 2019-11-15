@@ -1,9 +1,11 @@
 import * as moment from "moment";
 
 import { ConfigurationTarget, workspace } from "vscode";
-import { MappingData } from "./ConfigurationManager";
+import ConfigurationManager, { MappingData } from "./ConfigurationManager";
+import { maxBy } from "lodash";
 
 export default class ThemeScheduler {
+  private static dayMs = 8.64e7;
   private pendingTasks: NodeJS.Timeout[] = [];
 
   /**
@@ -19,16 +21,10 @@ export default class ThemeScheduler {
   /**
    * Schedules a new switch theme task
    */
-  schedule({ theme, timezone, time }: MappingData, daysOffset = 0): void {
-    const remainingMilliseconds = this.getTimeMillisecondsOffset(
-      timezone,
-      time,
-      daysOffset
-    );
-
+  schedule(mapping: MappingData, milliseconds: number): void {
     const task: NodeJS.Timeout = setTimeout(
-      () => this.execScheduled({ theme, time, timezone }, task),
-      remainingMilliseconds
+      () => this.execScheduled(mapping, task),
+      milliseconds
     );
 
     this.pendingTasks.push(task);
@@ -45,21 +41,28 @@ export default class ThemeScheduler {
     const toBeSchedule = millisecondsMap.filter(({ ms }) => ms > 0);
     const pastSchedules = millisecondsMap.filter(({ ms }) => ms <= 0);
 
-    const lastScheduledMapping = pastSchedules.reduce(
-      (prev, curr) => (prev.ms > curr.ms ? prev : curr),
-      pastSchedules[0]
-    );
+    const lastScheduledMapping = !pastSchedules.length
+      ? Object.assign({}, maxBy(toBeSchedule, "ms"), { ms: 0 })
+      : pastSchedules.reduce(
+          (prev, curr) => (prev.ms > curr.ms ? prev : curr),
+          pastSchedules[0]
+        );
 
-    const tomorrowSchedules = pastSchedules.filter(
-      ({ ms, mapping: { theme } }) =>
-        ms !== lastScheduledMapping.ms &&
-        theme !== lastScheduledMapping.mapping.theme
-    );
+    const tomorrowSchedules = pastSchedules
+      .filter(
+        ({ ms, mapping: { theme } }) =>
+          ms !== lastScheduledMapping.ms &&
+          theme !== lastScheduledMapping.mapping.theme
+      )
+      .map(({ mapping }) => ({
+        ms: this.getTimeMillisecondsOffset(mapping.timezone, mapping.time, 1),
+        mapping
+      }));
 
     const todaySchedules = [lastScheduledMapping, ...toBeSchedule];
 
-    todaySchedules.forEach(({ mapping }) => this.schedule(mapping));
-    tomorrowSchedules.forEach(({ mapping }) => this.schedule(mapping, 1));
+    todaySchedules.forEach(({ mapping, ms }) => this.schedule(mapping, ms));
+    tomorrowSchedules.forEach(({ mapping, ms }) => this.schedule(mapping, ms));
 
     console.info(`${this.pendingTasks.length} scheduled themes.`);
   }
@@ -73,22 +76,10 @@ export default class ThemeScheduler {
     { theme, timezone, time }: MappingData,
     originTask: NodeJS.Timeout
   ): Promise<void> {
-    await this.switchTheme(theme);
+    await ConfigurationManager.switchTheme(theme);
     this.pendingTasks = this.pendingTasks.filter(t => t !== originTask);
 
-    this.schedule({ theme, timezone, time }, 1);
-  }
-
-  /**
-   * Sets the global workbench colorTheme setting
-   * @param theme To be switched to
-   */
-  private async switchTheme(theme: string): Promise<void> {
-    const config = workspace.getConfiguration("workbench");
-
-    if (config.get("colorTheme") !== theme) {
-      await config.update("colorTheme", theme, ConfigurationTarget.Global);
-    }
+    this.schedule({ theme, timezone, time }, ThemeScheduler.dayMs);
   }
 
   /**
