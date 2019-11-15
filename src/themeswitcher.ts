@@ -11,12 +11,10 @@ export async function activate(context: code.ExtensionContext) {
 }
 
 function setup() {
-  scheduler.clear();
-
   const mappings = ConfigurationManager.getMappings();
 
   if (mappings) {
-    mappings.forEach(m => scheduler.schedule(m));
+    scheduler.scheduleAll(mappings);
   }
 }
 

@@ -9,32 +9,59 @@ export default class ThemeScheduler {
   /**
    * Cancel all pending timeouts callbacks
    */
-  clear() {
+  clear(): void {
     console.info("Clearing previous scheduled themes");
 
     this.pendingTasks.forEach(clearTimeout);
+    this.pendingTasks = [];
   }
 
   /**
    * Schedules a new switch theme task
    */
-  schedule({ theme, timezone, time }: MappingData, daysOffset = 0) {
+  schedule({ theme, timezone, time }: MappingData, daysOffset = 0): void {
     const remainingMilliseconds = this.getTimeMillisecondsOffset(
       timezone,
       time,
       daysOffset
     );
 
-    if (remainingMilliseconds < 0) {
-      this.schedule({ theme, timezone, time }, 1);
-    } else {
-      const task: NodeJS.Timeout = setTimeout(
-        () => this.execScheduled({ theme, time, timezone }, task),
-        remainingMilliseconds
-      );
+    const task: NodeJS.Timeout = setTimeout(
+      () => this.execScheduled({ theme, time, timezone }, task),
+      remainingMilliseconds
+    );
 
-      this.pendingTasks.push(task);
-    }
+    this.pendingTasks.push(task);
+  }
+
+  scheduleAll(mappings: MappingData[]) {
+    this.clear();
+
+    const millisecondsMap = mappings.map(mapping => {
+      const ms = this.getTimeMillisecondsOffset(mapping.timezone, mapping.time);
+      return { ms, mapping };
+    });
+
+    const toBeSchedule = millisecondsMap.filter(({ ms }) => ms > 0);
+    const pastSchedules = millisecondsMap.filter(({ ms }) => ms <= 0);
+
+    const lastScheduledMapping = pastSchedules.reduce(
+      (prev, curr) => (prev.ms > curr.ms ? prev : curr),
+      pastSchedules[0]
+    );
+
+    const tomorrowSchedules = pastSchedules.filter(
+      ({ ms, mapping: { theme } }) =>
+        ms !== lastScheduledMapping.ms &&
+        theme !== lastScheduledMapping.mapping.theme
+    );
+
+    const todaySchedules = [lastScheduledMapping, ...toBeSchedule];
+
+    todaySchedules.forEach(({ mapping }) => this.schedule(mapping));
+    tomorrowSchedules.forEach(({ mapping }) => this.schedule(mapping, 1));
+
+    console.info(`${this.pendingTasks.length} scheduled themes.`);
   }
 
   /**
@@ -45,7 +72,7 @@ export default class ThemeScheduler {
   private async execScheduled(
     { theme, timezone, time }: MappingData,
     originTask: NodeJS.Timeout
-  ) {
+  ): Promise<void> {
     await this.switchTheme(theme);
     this.pendingTasks = this.pendingTasks.filter(t => t !== originTask);
 
@@ -56,10 +83,12 @@ export default class ThemeScheduler {
    * Sets the global workbench colorTheme setting
    * @param theme To be switched to
    */
-  private async switchTheme(theme: string) {
-    workspace
-      .getConfiguration("workbench")
-      .update("colorTheme", theme, ConfigurationTarget.Global);
+  private async switchTheme(theme: string): Promise<void> {
+    const config = workspace.getConfiguration("workbench");
+
+    if (config.get("colorTheme") !== theme) {
+      await config.update("colorTheme", theme, ConfigurationTarget.Global);
+    }
   }
 
   /**
@@ -72,7 +101,7 @@ export default class ThemeScheduler {
     timezone: string,
     time: string,
     daysOffset = 0
-  ) {
+  ): number {
     const now = moment();
 
     if (timezone === "America/Sao_Paulo" && now.isDST()) {
