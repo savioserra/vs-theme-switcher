@@ -13,4 +13,18 @@ export default class ConfigurationManager {
       .getConfiguration("themeswitcher")
       .get<MappingData[]>("mappings");
   }
+
+  /**
+   * Sets the global workbench colorTheme setting
+   * @param theme To be switched to
+   */
+  static async switchTheme(theme: string): Promise<void> {
+    const config = code.workspace.getConfiguration("workbench");
+
+    if (config.get("colorTheme") !== theme) {
+      await config.update("colorTheme", theme, code.ConfigurationTarget.Global);
+    }
+  }
+
+  static MAPPINGS_CONFIGURATION = "themeswitcher.mappings";
 }
