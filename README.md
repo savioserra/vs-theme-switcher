@@ -1,65 +1,38 @@
-# theme-switcher README
+# ![icon](assets/icon.png) Theme Switcher
+This extension enables you to define which time which theme should be activated!
 
-This is the README for your extension "theme-switcher". After writing up a brief description, we recommend including the following sections.
+![preview](assets/preview.gif)
 
-## Features
+## How Setup Themes
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+For the extension to work, the only thing you need to do is to set in your VSCode settings the mappings you want, like this:
 
-For example if there is an image subfolder under your extension project workspace:
-
-\!\[feature X\]\(images/feature-x.png\)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
-
-## Requirements
-
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+```
+"themeswitcher.mappings": [
+    {
+        "time": "13:03",
+        "theme": "Material Theme",
+        "timezone": "America/Sao_Paulo"
+    },
+    {
+        "time": "12:04",
+        "theme": "Monokai",
+        "timezone": "America/Sao_Paulo"
+    },
+    {
+        "time": "00:53",
+        "theme": "Default Dark+",
+        "timezone": "America/Sao_Paulo"
+    },
+    ...
+],
+```
 
 ## Extension Settings
-
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
 This extension contributes the following settings:
+- `themeswitcher.mappings`: Array of mappings
 
-* `myExtension.enable`: enable/disable this extension
-* `myExtension.thing`: set to `blah` to do something
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
------------------------------------------------------------------------------------------------------------
-
-## Working with Markdown
-
-**Note:** You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux)
-* Toggle preview (`Shift+CMD+V` on macOS or `Shift+Ctrl+V` on Windows and Linux)
-* Press `Ctrl+Space` (Windows, Linux) or `Cmd+Space` (macOS) to see a list of Markdown snippets
-
-### For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
+## Credits
+- Icon made by [Pixel Perfect](https://www.flaticon.com/br/autores/pixel-perfect) from [www.flaticon.com](https://www.flaticon.com)
 
 **Enjoy!**
