@@ -2,7 +2,7 @@
   "name": "theme-switcher",
   "displayName": "Theme Switcher",
   "description": "Choose which themes should be activated which hour!",
-  "version": "1.0.2",
+  "version": "2.0.0",
   "publisher": "savioserra",
   "icon": "assets/icon128.png",
   "repository": {
@@ -27,12 +27,29 @@
         "themeswitcher.utcOffset": {
           "default": 0,
           "type": "integer",
-          "description": "The utc offset used to scheduling tasks. If you are in America/Sao_Paulo for example, this value is -3."
+          "description": "The utc offset used to scheduling tasks.",
+          "examples": [
+            -3,
+            -4,
+            0
+          ]
         },
         "themeswitcher.mappings": {
           "default": [],
           "type": "array",
-          "description": "Define here when each theme should be activated",
+          "description": "Array of mapping defining when each theme should be activated",
+          "examples": [
+            [
+              {
+                "time": "14:40",
+                "theme": "Material Theme"
+              },
+              {
+                "time": "20:40",
+                "theme": "Material Theme Darker"
+              }
+            ]
+          ],
           "items": {
             "type": "object",
             "required": [
