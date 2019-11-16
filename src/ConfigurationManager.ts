@@ -1,16 +1,14 @@
 import * as code from "vscode";
-import * as moment from "moment";
 
 export interface MappingData {
   theme: string;
   time: string;
-  timezone: string;
 }
 
 export default class ConfigurationManager {
-  static getMappings() {
+  static get mappings() {
     return code.workspace
-      .getConfiguration("themeswitcher")
+      .getConfiguration(ConfigurationManager.SESSION_NAME)
       .get<MappingData[]>("mappings");
   }
 
@@ -26,5 +24,18 @@ export default class ConfigurationManager {
     }
   }
 
-  static MAPPINGS_CONFIGURATION = "themeswitcher.mappings";
+  /**
+   * Gets the current utc offset setting
+   */
+  static get utcOffset(): number | undefined {
+    const config = code.workspace.getConfiguration(
+      ConfigurationManager.SESSION_NAME
+    );
+
+    return config.get<number>("utcOffset");
+  }
+
+  static SESSION_NAME = "themeswitcher";
+  static MAPPINGS_SETTINGS = `${ConfigurationManager.SESSION_NAME}.mappings`;
+  static UTCOFFSET_SETTING = `${ConfigurationManager.SESSION_NAME}.utcOffset`;
 }

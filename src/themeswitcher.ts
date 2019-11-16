@@ -8,14 +8,14 @@ export async function activate(context: code.ExtensionContext) {
   refresh();
 
   code.workspace.onDidChangeConfiguration(({ affectsConfiguration }) => {
-    if (affectsConfiguration(ConfigurationManager.MAPPINGS_CONFIGURATION)) {
+    if (affectsConfiguration(ConfigurationManager.SESSION_NAME)) {
       refresh();
     }
   });
 }
 
 function refresh() {
-  const mappings = ConfigurationManager.getMappings();
+  const mappings = ConfigurationManager.mappings;
 
   if (mappings) {
     scheduler.scheduleAll(mappings);
