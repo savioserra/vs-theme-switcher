@@ -9,21 +9,19 @@ This extension enables you to define which time which theme should be activated!
 For the extension to work, the only thing you need to do is to set in your VSCode settings the mappings you want, like this:
 
 ```
+"themeswitcher.utcOffset": -3, // Example
 "themeswitcher.mappings": [
     {
         "time": "13:03",
         "theme": "Material Theme",
-        "timezone": "America/Sao_Paulo"
     },
     {
         "time": "12:04",
         "theme": "Monokai",
-        "timezone": "America/Sao_Paulo"
     },
     {
         "time": "00:53",
         "theme": "Default Dark+",
-        "timezone": "America/Sao_Paulo"
     },
     ...
 ],
@@ -34,6 +32,7 @@ For the extension to work, the only thing you need to do is to set in your VSCod
 This extension contributes the following settings:
 
 - `themeswitcher.mappings`: Array of mappings
+- `themeswitcher.utcOffset`: The utc offset used to scheduling tasks.
 
 ## Credits
 

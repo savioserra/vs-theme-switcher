@@ -34,7 +34,7 @@ export default class ThemeScheduler {
     this.clear();
 
     const millisecondsMap = mappings.map(mapping => {
-      const ms = this.getTimeMillisecondsOffset(mapping.timezone, mapping.time);
+      const ms = this.getTimeMillisecondsOffset(mapping.time);
       return { ms, mapping };
     });
 
@@ -55,7 +55,7 @@ export default class ThemeScheduler {
           theme !== lastScheduledMapping.mapping.theme
       )
       .map(({ mapping }) => ({
-        ms: this.getTimeMillisecondsOffset(mapping.timezone, mapping.time, 1),
+        ms: this.getTimeMillisecondsOffset(mapping.time, 1),
         mapping
       }));
 
@@ -73,13 +73,13 @@ export default class ThemeScheduler {
    * @param originTask Task which originated this task
    */
   private async execScheduled(
-    { theme, timezone, time }: MappingData,
+    { theme, time }: MappingData,
     originTask: NodeJS.Timeout
   ): Promise<void> {
     await ConfigurationManager.switchTheme(theme);
     this.pendingTasks = this.pendingTasks.filter(t => t !== originTask);
 
-    this.schedule({ theme, timezone, time }, ThemeScheduler.dayMs);
+    this.schedule({ theme, time }, ThemeScheduler.dayMs);
   }
 
   /**
@@ -88,22 +88,14 @@ export default class ThemeScheduler {
    * @param time Time string. Format: 23:59 (HH:MM)
    * @param daysOffset How many days should be added to time param
    */
-  private getTimeMillisecondsOffset(
-    timezone: string,
-    time: string,
-    daysOffset = 0
-  ): number {
-    const now = moment();
-
-    if (timezone === "America/Sao_Paulo" && now.isDST()) {
-      // Just until moment updates daylight saving rules for Brazil
-      // https://github.com/moment/moment-timezone/issues/785
-
-      now.subtract(1, "hour");
-    }
+  private getTimeMillisecondsOffset(time: string, daysOffset = 0): number {
+    const now = moment.utc();
+    now.add(ConfigurationManager.utcOffset, "hours");
 
     const datetime = moment(time, "hh:mm:ss");
-    const toBeSchedule = moment(now)
+
+    const toBeSchedule = now
+      .clone()
       .set({
         hour: datetime.hour(),
         minute: datetime.minute(),
