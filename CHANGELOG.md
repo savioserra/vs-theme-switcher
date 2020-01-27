@@ -11,3 +11,7 @@
 ## 2.0.0
 
 - No need to specify timezone in each mapping. Instead, define the `utcOffset` setting.
+
+## 2.0.1
+
+- Fixed bug when some tasks were skipped; Turns out the javascript runtime doesn't handle very well setTimouts passing a really long number as interval, so we're refreshing all the schedules every ten minutes.

@@ -12,6 +12,8 @@ export async function activate(context: code.ExtensionContext) {
       refresh();
     }
   });
+
+  setInterval(refresh, 6e5); // Refresh in every ten minutes
 }
 
 function refresh() {
