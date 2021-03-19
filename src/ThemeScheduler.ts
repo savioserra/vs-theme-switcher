@@ -1,6 +1,5 @@
 import * as moment from "moment";
 
-import { ConfigurationTarget, workspace } from "vscode";
 import ConfigurationManager, { MappingData } from "./ConfigurationManager";
 import { maxBy } from "lodash";
 
@@ -33,7 +32,7 @@ export default class ThemeScheduler {
   scheduleAll(mappings: MappingData[]) {
     this.clear();
 
-    const millisecondsMap = mappings.map(mapping => {
+    const millisecondsMap = mappings.map((mapping) => {
       const ms = this.getTimeMillisecondsOffset(mapping.time);
       return { ms, mapping };
     });
@@ -56,7 +55,7 @@ export default class ThemeScheduler {
       )
       .map(({ mapping }) => ({
         ms: this.getTimeMillisecondsOffset(mapping.time, 1),
-        mapping
+        mapping,
       }));
 
     const todaySchedules = [lastScheduledMapping, ...toBeSchedule];
@@ -77,7 +76,7 @@ export default class ThemeScheduler {
     originTask: NodeJS.Timeout
   ): Promise<void> {
     await ConfigurationManager.switchTheme(theme);
-    this.pendingTasks = this.pendingTasks.filter(t => t !== originTask);
+    this.pendingTasks = this.pendingTasks.filter((t) => t !== originTask);
 
     this.schedule({ theme, time }, ThemeScheduler.dayMs);
   }
@@ -96,11 +95,7 @@ export default class ThemeScheduler {
 
     const toBeSchedule = now
       .clone()
-      .set({
-        hour: datetime.hour(),
-        minute: datetime.minute(),
-        second: datetime.second()
-      })
+      .set({ h: datetime.hour(), m: datetime.minute(), s: datetime.second() })
       .add(daysOffset, "days");
 
     return toBeSchedule.diff(now, "milliseconds");
