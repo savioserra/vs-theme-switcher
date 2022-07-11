@@ -2,6 +2,9 @@ import * as code from "vscode";
 import ConfigurationManager from "./ConfigurationManager";
 import ThemeScheduler from "./ThemeScheduler";
 
+
+// Supose this is an actual change 
+
 const scheduler = new ThemeScheduler();
 
 export async function activate(context: code.ExtensionContext) {
