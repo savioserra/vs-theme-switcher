@@ -72,13 +72,16 @@ export default class ThemeScheduler {
    * @param originTask Task which originated this task
    */
   private async execScheduled(
-    { theme, time }: MappingData,
+    { iconTheme, theme, time }: MappingData,
     originTask: NodeJS.Timeout
   ): Promise<void> {
+    if (iconTheme !== undefined) {
+      await ConfigurationManager.switchIconTheme(iconTheme);
+    }
     await ConfigurationManager.switchTheme(theme);
     this.pendingTasks = this.pendingTasks.filter((t) => t !== originTask);
 
-    this.schedule({ theme, time }, ThemeScheduler.dayMs);
+    this.schedule({ iconTheme, theme, time }, ThemeScheduler.dayMs);
   }
 
   /**

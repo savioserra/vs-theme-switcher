@@ -1,6 +1,7 @@
 import * as code from "vscode";
 
 export interface MappingData {
+  iconTheme?: string,
   theme: string;
   time: string;
 }
@@ -10,6 +11,18 @@ export default class ConfigurationManager {
     return code.workspace
       .getConfiguration(ConfigurationManager.SESSION_NAME)
       .get<MappingData[]>("mappings");
+  }
+
+  /**
+   * Sets the global workbench iconTheme setting
+   * @param iconTheme To be switched to
+   */
+  static async switchIconTheme(iconTheme: string): Promise<void> {
+    const config = code.workspace.getConfiguration("workbench");
+
+    if (config.get("iconTheme") !== iconTheme) {
+      await config.update("iconTheme", iconTheme, code.ConfigurationTarget.Global);
+    }
   }
 
   /**

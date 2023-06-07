@@ -14,14 +14,17 @@ For the extension to work, the only thing you need to do is to set in your VSCod
     {
         "time": "13:03",
         "theme": "Material Theme",
+        "iconTheme": "catppuccin-latte",
     },
     {
         "time": "12:04",
         "theme": "Monokai",
+        "iconTheme": "catppuccin-mocha",
     },
     {
         "time": "00:53",
         "theme": "Default Dark+",
+        "iconTheme": "catppuccin-mocha",
     },
     ...
 ],
