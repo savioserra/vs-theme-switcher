@@ -10,7 +10,7 @@
     "url": "https://github.com/savioserra/vs-theme-switcher.git"
   },
   "engines": {
-    "vscode": "^1.22.0"
+    "vscode": "^1.91.0"
   },
   "categories": [
     "Themes",
