@@ -20,6 +20,10 @@
     "onStartupFinished"
   ],
   "main": "./dist/themeswitcher.js",
+  "files": [
+    "dist",
+    "assets"
+  ],
   "contributes": {
     "commands": [
       {
