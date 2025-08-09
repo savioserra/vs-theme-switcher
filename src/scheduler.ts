@@ -5,16 +5,16 @@ import * as config from './config';
 import { Subject, Observable, timer, Subscription } from 'rxjs';
 
 export type SchedulerEvent =
-  | { type: 'theme_registered'; name: string; when: string }
-  | { type: 'theme_scheduled'; name: string; when: string }
+  | { type: 'theme_registered'; themes: config.Configuration[] }
   | { type: 'theme_applied'; name: string }
+  | { type: 'icon_theme_applied'; name: string }
   | { type: 'theme_unregistered'; name: string }
   | { type: 'cleared' };
 
 interface RegisteredTheme {
   when: Moment;
-  theme: string;
-  iconTheme?: string;
+  theme?: { label: string; id: string };
+  iconTheme?: { label: string; id: string };
 }
 
 export default class Scheduler {
@@ -40,14 +40,22 @@ export default class Scheduler {
 
       const currentTheme = config.getCurrentTheme();
 
-      if (target && target.theme !== currentTheme) {
-        await config.applyTheme(target.theme);
+      if (target?.iconTheme && target.iconTheme.id !== currentTheme.iconTheme) {
+        await config.applyIconTheme(target.iconTheme.id);
 
-        if (target.iconTheme) {
-          await config.applyIconTheme(target.iconTheme);
-        }
+        this.eventsSubject.next({
+          type: 'icon_theme_applied',
+          name: target.iconTheme.label,
+        });
+      }
 
-        this.eventsSubject.next({ type: 'theme_applied', name: target.theme });
+      if (target?.theme?.id && target.theme.id !== currentTheme.theme) {
+        await config.applyTheme(target.theme.id);
+
+        this.eventsSubject.next({
+          type: 'theme_applied',
+          name: target.theme.label,
+        });
       }
     });
   }
@@ -58,9 +66,12 @@ export default class Scheduler {
   }
 
   public register(...themes: config.Configuration[]): void {
-    const values: typeof this.registered = [];
+    const availableThemes = config.getAllColorThemes();
+    const availableIconThemes = config.getAllIconThemes();
 
-    for (const { time, theme } of themes) {
+    const values: RegisteredTheme[] = [];
+
+    for (const { time, theme, iconTheme } of themes) {
       const date = moment(time, 'HH:mm');
 
       if (!date.isValid()) {
@@ -71,20 +82,17 @@ export default class Scheduler {
         continue;
       }
 
-      values.push({ theme, when: date });
+      const t = availableThemes.find((t) => t.id === theme);
+      const i = availableIconThemes.find((t) => t.id === iconTheme);
+
+      values.push({ theme: t, iconTheme: i, when: date });
     }
 
-    this.registered = [...this.registered, ...values].sort((a, b) => {
-      return b.when.diff(a.when);
-    });
+    this.registered = [...this.registered, ...values].sort((a, b) =>
+      b.when.diff(a.when),
+    );
 
-    values.forEach(({ theme, when }) => {
-      this.eventsSubject.next({
-        name: theme,
-        type: 'theme_registered',
-        when: when.format('HH:mm'),
-      });
-    });
+    this.eventsSubject.next({ type: 'theme_registered', themes });
   }
 
   public unregisterAll(): void {

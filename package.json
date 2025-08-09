@@ -17,8 +17,7 @@
     "Other"
   ],
   "activationEvents": [
-    "*",
-    "onCommand:themeswitcher.openSettings"
+    "onStartupFinished"
   ],
   "main": "./dist/themeswitcher.js",
   "contributes": {
