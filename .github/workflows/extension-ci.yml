@@ -59,12 +59,17 @@ jobs:
   publish:
     name: Publish Extension
     needs: build_and_test
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: ${{ startsWith(github.ref, 'refs/tags/v') }}
     runs-on: ubuntu-latest
+    env:
+      VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
+      OVSX_TOKEN: ${{ secrets.OVSX_TOKEN }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -78,16 +83,22 @@ jobs:
       - name: Build (webpack)
         run: yarn webpack
 
+      - name: Verify tag commit is on master
+        id: verify_master
+        run: |
+          git fetch origin master
+          if git merge-base --is-ancestor "$GITHUB_SHA" origin/master; then
+            echo "on_master=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "on_master=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Publish to Visual Studio Marketplace (vsce)
-        if: ${{ secrets.VSCE_TOKEN != '' }}
-        env:
-          VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
+        if: ${{ env.VSCE_TOKEN != '' && steps.verify_master.outputs.on_master == 'true' }}
         run: npx --yes vsce publish -p "$VSCE_TOKEN"
 
       - name: Publish to Open VSX (ovsx)
-        if: ${{ secrets.OVSX_TOKEN != '' }}
-        env:
-          OVSX_TOKEN: ${{ secrets.OVSX_TOKEN }}
+        if: ${{ env.OVSX_TOKEN != '' && steps.verify_master.outputs.on_master == 'true' }}
         run: npx --yes ovsx publish -p "$OVSX_TOKEN"
 # Notes:
 # - Set repository secrets VSCE_TOKEN (for Visual Studio Marketplace) and OVSX_TOKEN (for Open VSX)
