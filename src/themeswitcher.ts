@@ -1,29 +1,64 @@
-import * as code from "vscode";
-import ConfigurationManager from "./ConfigurationManager";
-import ThemeScheduler from "./ThemeScheduler";
+import * as vscode from 'vscode';
+import * as config from './config';
+import Scheduler, { type SchedulerEvent } from './scheduler';
+import type { Subscription } from 'rxjs';
 
-const scheduler = new ThemeScheduler();
+export type { SchedulerEvent };
 
-export async function activate(context: code.ExtensionContext) {
-  refresh();
+const scheduler = new Scheduler();
+// Expose the event stream so plugins can subscribe
+export const events$ = scheduler.events$;
 
-  code.workspace.onDidChangeConfiguration(({ affectsConfiguration }) => {
-    if (affectsConfiguration(ConfigurationManager.SESSION_NAME)) {
-      refresh();
+let subscription: Subscription | undefined;
+
+function registerAll() {
+  const themes = config.getMappings() ?? [];
+  scheduler.register(...themes);
+}
+
+export async function activate(_context: vscode.ExtensionContext) {
+  registerAll();
+  scheduler.start();
+
+  subscription = events$.subscribe({
+    next: (event) => {
+      switch (event.type) {
+        case 'theme_applied': {
+          return vscode.window.showInformationMessage(
+            `Theme Switcher: ${event.name}`,
+          );
+        }
+        case 'theme_registered':
+        case 'theme_scheduled':
+        case 'theme_unregistered':
+          // These event types are intentionally ignored
+          return;
+        default:
+          // Unknown event type
+          return;
+      }
+    },
+    error: (error) => {
+      vscode.window.showErrorMessage(
+        `[ThemeSwitcher] Error occurred: ${error}`,
+      );
+    },
+  });
+
+  vscode.workspace.onDidChangeConfiguration((event) => {
+    if (event.affectsConfiguration(config.SESSION_NAME)) {
+      scheduler.stop();
+      scheduler.unregisterAll();
+
+      registerAll();
+      scheduler.start();
     }
   });
 
   setInterval(refresh, 6e5); // Refresh in every ten minutes
 }
 
-function refresh() {
-  const mappings = ConfigurationManager.mappings;
-
-  if (mappings) {
-    scheduler.scheduleAll(mappings);
-  }
-}
-
 export function deactivate() {
-  scheduler.clear();
+  scheduler.stop();
+  subscription?.unsubscribe();
 }
