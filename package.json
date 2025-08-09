@@ -17,10 +17,17 @@
     "Other"
   ],
   "activationEvents": [
-    "*"
+    "*",
+    "onCommand:themeswitcher.openSettings"
   ],
   "main": "./dist/themeswitcher.js",
   "contributes": {
+    "commands": [
+      {
+        "command": "themeswitcher.openSettings",
+        "title": "Theme Switcher: Open Settings"
+      }
+    ],
     "configuration": {
       "title": "Theme Switcher",
       "properties": {
@@ -64,6 +71,10 @@
               },
               "theme": {
                 "description": "Theme to be activated",
+                "type": "string"
+              },
+              "iconTheme": {
+                "description": "Icon Theme to be activated (optional)",
                 "type": "string"
               }
             }

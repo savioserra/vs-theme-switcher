@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 export interface Configuration {
   time: string;
   theme: string;
+  iconTheme?: string;
 }
 
 export const SESSION_NAME = 'themeswitcher';
@@ -17,6 +18,12 @@ export async function applyTheme(theme: string) {
   return vscode.workspace
     .getConfiguration('workbench')
     .update('colorTheme', theme, vscode.ConfigurationTarget.Global);
+}
+
+export async function applyIconTheme(iconTheme: string) {
+  return vscode.workspace
+    .getConfiguration('workbench')
+    .update('iconTheme', iconTheme, vscode.ConfigurationTarget.Global);
 }
 
 export function getCurrentTheme() {

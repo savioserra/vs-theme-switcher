@@ -11,9 +11,16 @@ export type SchedulerEvent =
   | { type: 'theme_unregistered'; name: string }
   | { type: 'cleared' };
 
+interface RegisteredTheme {
+  when: Moment;
+  theme: string;
+  iconTheme?: string;
+}
+
 export default class Scheduler {
   private timerSubscription?: Subscription;
-  private registered: Array<{ theme: string; when: Moment }> = [];
+  // Registered themes in descending order
+  private registered: RegisteredTheme[] = [];
   private readonly eventsSubject = new Subject<SchedulerEvent>();
 
   public readonly events$: Observable<SchedulerEvent> =
@@ -28,13 +35,18 @@ export default class Scheduler {
       const now = moment();
 
       const target = this.registered
-        .map(({ theme, when }) => ({ theme, when: ensureSameDay(when, now) }))
+        .map(({ when, ...it }) => ({ ...it, when: ensureSameDay(when, now) }))
         .find(({ when }) => now.isSameOrAfter(when, 'minute'));
 
       const currentTheme = config.getCurrentTheme();
 
       if (target && target.theme !== currentTheme) {
         await config.applyTheme(target.theme);
+
+        if (target.iconTheme) {
+          await config.applyIconTheme(target.iconTheme);
+        }
+
         this.eventsSubject.next({ type: 'theme_applied', name: target.theme });
       }
     });
