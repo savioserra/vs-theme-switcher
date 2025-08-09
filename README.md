@@ -73,6 +73,10 @@ Notes:
 - Report issues: https://github.com/savioserra/vs-theme-switcher/issues
 - Source code: https://github.com/savioserra/vs-theme-switcher
 
+## Roadmap
+
+- [ ] Automated sunrise/sunset scheduling
+
 ## Credits
 
 - Icon made by [Pixel Perfect](https://www.flaticon.com/br/autores/pixel-perfect) from [www.flaticon.com](https://www.flaticon.com)

@@ -1,17 +1,19 @@
 # Change Log
 
-## 1.0.0
+## 2.3.0
 
-- Initial release
+- Added optional `iconTheme` support in mappings to switch File Icon Theme along with the Color Theme.
 
-## 1.0.1
-
-- If there are no tasks scheduled until the current time, then get the last task from yesterday.
+Special thanks to https://github.com/zzhaolei for suggesting the iconTheme support :)
 
 ## 2.0.0
 
 - No need to specify timezone in each mapping. Instead, define the `utcOffset` setting.
 
-## 2.0.1
+## 1.0.1
 
-- Fixed bug when some tasks were skipped; Turns out the javascript runtime doesn't handle very well setTimouts passing a really long number as interval, so we're refreshing all the schedules every ten minutes.
+- If there are no tasks scheduled until the current time, then get the last task from yesterday.
+
+## 1.0.0
+
+- Initial release
