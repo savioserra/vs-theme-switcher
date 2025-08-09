@@ -10,3 +10,4 @@ vsc-extension-quickstart.md
 **/*.ts
 node_modules/
 assets/preview.gif
+assets/settings-ui-preview.png
