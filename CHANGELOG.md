@@ -1,5 +1,9 @@
 # Change Log
 
+## 2.3.1
+
+- Fixed: Settings page theme select now shows the saved value correctly.
+
 ## 2.3.0
 
 - Added optional `iconTheme` support in mappings to switch File Icon Theme along with the Color Theme.

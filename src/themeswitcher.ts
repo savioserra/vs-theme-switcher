@@ -269,7 +269,7 @@ function getWebviewHtml(webview: vscode.Webview, nonce: string) {
             const theme = document.createElement('select');
             const opt0 = document.createElement('option'); opt0.value=''; opt0.textContent='Select a theme'; theme.appendChild(opt0);
             state.themes.forEach(t => { const o=document.createElement('option'); o.value=t.id; o.textContent=t.label; theme.appendChild(o); });
-            theme.value = m.theme?.id || '';
+            theme.value = (typeof m.theme === 'string' ? m.theme : m.theme?.id) || '';
             theme.addEventListener('input', (e) => updateMapping(idx, { theme: e.target.value || '' }));
 
             const icon = document.createElement('select');
