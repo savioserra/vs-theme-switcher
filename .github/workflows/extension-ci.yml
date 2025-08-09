@@ -51,7 +51,7 @@ jobs:
           fi
 
       - name: Package VSIX
-        run: npx --yes vsce package
+        run: npx --yes @vscode/vsce package
 
       - name: Upload VSIX artifact
         uses: actions/upload-artifact@v4
@@ -98,7 +98,7 @@ jobs:
 
       - name: Publish to Visual Studio Marketplace (vsce)
         if: ${{ env.VSCE_TOKEN != '' && steps.verify_master.outputs.on_master == 'true' }}
-        run: npx --yes vsce publish -p "$VSCE_TOKEN"
+        run: npx --yes @vscode/vsce publish -p "$VSCE_TOKEN"
 
       - name: Publish to Open VSX (ovsx)
         if: ${{ env.OVSX_TOKEN != '' && steps.verify_master.outputs.on_master == 'true' }}
