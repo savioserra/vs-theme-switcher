@@ -2,6 +2,8 @@
 
 Schedule your favorite VS Code themes to switch automatically at specific times of the day.
 
+![settings](https://raw.githubusercontent.com/savioserra/vs-theme-switcher/master/assets/settings-ui-preview.png)
+
 ![preview](https://raw.githubusercontent.com/savioserra/vs-theme-switcher/master/assets/preview.gif)
 
 ## What it does
@@ -23,10 +25,10 @@ Schedule your favorite VS Code themes to switch automatically at specific times 
 
 ## Quick start
 
-1) Install the extension.
-2) Open the Command Palette (Ctrl/Cmd+Shift+P) and run: "Theme Switcher: Open Settings".
+1. Install the extension.
+2. Open the Command Palette (Ctrl/Cmd+Shift+P) and run: "Theme Switcher: Open Settings".
    - Use the UI to add time -> theme mappings and save.
-3) Alternatively, configure via Settings (JSON):
+3. Alternatively, configure via Settings (JSON):
 
 ```jsonc
 {
@@ -36,12 +38,13 @@ Schedule your favorite VS Code themes to switch automatically at specific times 
   // Switch to these themes at the specified times (24-hour HH:mm)
   "themeswitcher.mappings": [
     { "time": "08:00", "theme": "Default Light+", "iconTheme": "vs-seti" },
-    { "time": "18:30", "theme": "Default Dark+",  "iconTheme": "vs-seti" }
-  ]
+    { "time": "18:30", "theme": "Default Dark+", "iconTheme": "vs-seti" },
+  ],
 }
 ```
 
 Notes:
+
 - Time format must be HH:mm (24-hour). Invalid times are ignored and an error is shown.
 - Theme and Icon Theme names must match the names shown in Preferences: Color Theme and File Icon Theme.
 - The extension checks periodically and applies the theme when the current time reaches your mapping.
@@ -74,4 +77,6 @@ Notes:
 
 - Icon made by [Pixel Perfect](https://www.flaticon.com/br/autores/pixel-perfect) from [www.flaticon.com](https://www.flaticon.com)
 
-**Enjoy!**
+With love, Shyylol!
+
+[![ko-fi](https://storage.ko-fi.com/cdn/brandasset/v2/support_me_on_kofi_dark.png)](https://ko-fi.com/L3L81JF9UX)

@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import type { Subscription } from 'rxjs';
+import * as path from 'path';
 
 import * as config from './config';
 import Scheduler, { type SchedulerEvent } from './scheduler';
@@ -72,10 +72,45 @@ export async function activate(context: vscode.ExtensionContext) {
 
   registerAll();
   scheduler.start();
+
+  // Show welcome page on first install
+  await showWelcomeIfFirstInstall(context);
 }
 
 export function deactivate() {
   scheduler.stop();
+}
+
+async function showWelcomeIfFirstInstall(context: vscode.ExtensionContext) {
+  try {
+    const VERSION_KEY = 'themeswitcher.installedVersion';
+    const previousVersion = context.globalState.get<string>(VERSION_KEY);
+
+    const ext = vscode.extensions.getExtension('savioserra.theme-switcher');
+    const currentVersion =
+      (ext?.packageJSON?.version as string | undefined) ?? 'unknown';
+
+    // Always update stored version and
+    // determine first install by absence of previous value
+    await context.globalState.update(VERSION_KEY, currentVersion);
+
+    const isTestEnv =
+      context.extensionMode === vscode.ExtensionMode.Test ||
+      process.env['VSCODE_TEST'];
+
+    if (!previousVersion || isTestEnv) {
+      const readmePath = path.join(context.extensionPath, 'README.md');
+      const uri = vscode.Uri.file(readmePath);
+
+      try {
+        await vscode.commands.executeCommand('markdown.showPreview', uri);
+      } catch {
+        await vscode.commands.executeCommand('vscode.open', uri);
+      }
+    }
+  } catch (err) {
+    console.warn('[ThemeSwitcher] Failed to show welcome page:', err);
+  }
 }
 
 function openSettingsWebview(_context: vscode.ExtensionContext) {
@@ -85,6 +120,16 @@ function openSettingsWebview(_context: vscode.ExtensionContext) {
     { viewColumn: vscode.ViewColumn.Active, preserveFocus: false },
     { enableScripts: true, retainContextWhenHidden: true },
   );
+
+  // Use the same icon as the extension for the Settings page tab
+  try {
+    const icon = vscode.Uri.file(
+      path.join(_context.extensionPath, 'assets', 'icon128.png'),
+    );
+    panel.iconPath = { light: icon, dark: icon };
+  } catch (err) {
+    console.warn('[ThemeSwitcher] Failed to set settings icon:', err);
+  }
 
   const webview = panel.webview;
   const nonce = getNonce();
@@ -138,13 +183,13 @@ function getWebviewHtml(webview: vscode.Webview, nonce: string) {
       <title>Theme Switcher Settings</title>
       <style>
         :root { color-scheme: light dark; }
-        body { background: var(--vscode-editor-background); color: var(--vscode-foreground); font-family: var(--vscode-font-family, -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif); }
-        .container { padding: 12px; font-size: 13px; }
+        body { background: var(--vscode-editor-background); color: var(--vscode-foreground); font-family: var(--vscode-font-family, -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif); display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 12px; min-height: 100vh; }
+        .container { padding: 12px; font-size: 13px; display: flex; flex-direction: column; gap: 12px; justify-content: center; align-items: center; }
         .row { display: grid; grid-template-columns: 1fr 1.5fr 1.5fr auto; gap: 8px; align-items: center; padding: 6px 4px; }
         .header { font-weight: 600; color: var(--vscode-descriptionForeground); padding: 4px; }
         .border { border: 1px solid rgba(127,127,127,.25); border-radius: 6px; }
         .actions { margin-top: 12px; display: flex; gap: 8px; }
-        .btn { padding: 6px 10px; border: none; border-radius: 4px; font-size: 12px; cursor: pointer; }
+        .btn { padding: 6px 10px; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; min-width: 100px; }
         .btn-primary { background: var(--vscode-button-background); color: var(--vscode-button-foreground); }
         .btn-primary:hover { background: var(--vscode-button-hoverBackground); }
         .btn-secondary { background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border); }
@@ -174,6 +219,12 @@ function getWebviewHtml(webview: vscode.Webview, nonce: string) {
           <button class="btn btn-primary" id="saveBtn" disabled>Save</button>
           <button class="btn btn-secondary" id="addBtn">+ Add</button>
         </div>
+      </div>
+
+      <div style="width: 320px;">
+        <a href="https://ko-fi.com/shyylol" target="_blank">
+          <img src="https://storage.ko-fi.com/cdn/brandasset/v2/support_me_on_kofi_dark.png?_gl=1*1673hhv*_gcl_au*NzUwMTY5NjA2LjE3NTQ3NTY5NTk.*_ga*ODU0MTQ1OTIwLjE3NTQ3NTY5NjA.*_ga_M13FZ7VQ2C*czE3NTQ3NTY5NTkkbzEkZzEkdDE3NTQ3NTg3NTkkajYwJGwwJGgw" alt="Support me on Ko-fi" />
+        </a>
       </div>
 
       <script nonce="${nonce}">
