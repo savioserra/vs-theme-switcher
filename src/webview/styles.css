@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* VS Code webview friendly tweaks */
+:root {
+  color-scheme: light dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+/* Use VS Code theming variables where appropriate */
+select,
+input,
+button {
+  color: var(--vscode-foreground);
+  background-color: var(--vscode-editor-background);
+}
