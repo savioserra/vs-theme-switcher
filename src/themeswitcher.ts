@@ -21,8 +21,13 @@ export async function activate(context: vscode.ExtensionContext) {
       switch (event.type) {
         case 'theme_applied':
         case 'icon_theme_applied': {
+          const msg = {
+            theme_applied: 'Theme applied',
+            icon_theme_applied: 'Icon theme applied',
+          };
+
           const selection = await vscode.window.showInformationMessage(
-            `Theme Switcher: ${event.name}`,
+            `${msg[event.type]}: ${event.name}`,
             { title: 'Settings', action: 'openSettings' },
           );
 
@@ -118,7 +123,13 @@ function openSettingsWebview(_context: vscode.ExtensionContext) {
     'themeSwitcherSettings',
     'Theme Switcher Settings',
     { viewColumn: vscode.ViewColumn.Active, preserveFocus: false },
-    { enableScripts: true, retainContextWhenHidden: true },
+    {
+      enableScripts: true,
+      retainContextWhenHidden: true,
+      localResourceRoots: [
+        vscode.Uri.file(path.join(_context.extensionPath, 'dist', 'webview')),
+      ],
+    },
   );
 
   // Use the same icon as the extension for the Settings page tab
@@ -126,51 +137,130 @@ function openSettingsWebview(_context: vscode.ExtensionContext) {
     const icon = vscode.Uri.file(
       path.join(_context.extensionPath, 'assets', 'icon128.png'),
     );
+
     panel.iconPath = { light: icon, dark: icon };
   } catch (err) {
     console.warn('[ThemeSwitcher] Failed to set settings icon:', err);
   }
 
-  const webview = panel.webview;
   const nonce = getNonce();
-  panel.webview.html = getWebviewHtml(webview, nonce);
+  const webview = panel.webview;
 
-  const postInit = () => {
-    const mappings = config.getMappings();
-    const themes = config.getAllColorThemes();
-    const iconThemes = config.getAllIconThemes();
-    webview.postMessage({ type: 'init', mappings, themes, iconThemes });
-  };
+  const scriptPathOnDisk = vscode.Uri.file(
+    path.join(_context.extensionPath, 'dist', 'webview', 'settings.js'),
+  );
 
-  webview.onDidReceiveMessage(async (message) => {
-    switch (message?.type) {
-      case 'ready':
-      case 'requestInit':
-        postInit();
-        return;
-      case 'saveMappings': {
-        await vscode.workspace
-          .getConfiguration(config.SESSION_NAME)
-          .update(
-            'mappings',
-            Array.isArray(message.mappings) ? message.mappings : [],
-            vscode.ConfigurationTarget.Global,
+  const scriptUri = webview.asWebviewUri(scriptPathOnDisk);
+  panel.webview.html = getWebviewHtml(webview, nonce, scriptUri);
+
+  // Dev-only hot reload: watch webview bundle and reload on changes
+  if (_context.extensionMode === vscode.ExtensionMode.Development) {
+    try {
+      const pattern = new vscode.RelativePattern(
+        _context.extensionUri,
+        'dist/webview/**/*',
+      );
+
+      const watcher = vscode.workspace.createFileSystemWatcher(pattern);
+
+      let reloadTimer: NodeJS.Timeout | undefined;
+
+      const triggerReload = () => {
+        if (reloadTimer) {
+          clearTimeout(reloadTimer);
+        }
+
+        reloadTimer = setTimeout(() => {
+          const newNonce = getNonce();
+          const bustedScriptUri = scriptUri.with({ query: `v=${Date.now()}` });
+
+          panel.webview.html = getWebviewHtml(
+            webview,
+            newNonce,
+            bustedScriptUri,
           );
-        vscode.window.showInformationMessage('Theme Switcher: Settings saved');
-        return;
+
+          void webview.postMessage({
+            type: 'init-form',
+            themes: config.getAllColorThemes(),
+            iconThemes: config.getAllIconThemes(),
+          });
+
+          void webview.postMessage({
+            type: 'changed',
+            state: config.getMappings(),
+          });
+        }, 100);
+      };
+
+      const disposable = watcher.onDidChange(triggerReload);
+
+      panel.onDidDispose(() => {
+        watcher.dispose();
+        disposable.dispose();
+
+        if (reloadTimer) {
+          clearTimeout(reloadTimer);
+        }
+      });
+    } catch (err) {
+      console.warn('[ThemeSwitcher] Failed to setup dev hot reload:', err);
+    }
+  }
+
+  const subscription = events$.subscribe((event) => {
+    switch (event.type) {
+      case 'init':
+      case 'cleared':
+      case 'theme_registered':
+      case 'theme_unregistered': {
+        const state = config.getMappings();
+        webview.postMessage({ type: 'changed', state });
+        break;
       }
+
       default:
         return;
     }
   });
+
+  panel.onDidDispose(() => subscription.unsubscribe());
+
+  webview.onDidReceiveMessage(async (message) => {
+    switch (message?.type) {
+      case 'save': {
+        await config.save(message as config.Settings);
+        vscode.window.showInformationMessage('Theme Switcher: Settings saved');
+        return;
+      }
+
+      default:
+        return;
+    }
+  });
+
+  void webview.postMessage({
+    type: 'init-form',
+    themes: config.getAllColorThemes(),
+    iconThemes: config.getAllIconThemes(),
+  });
+
+  void webview.postMessage({
+    type: 'changed',
+    state: config.getMappings(),
+  });
 }
 
-function getWebviewHtml(webview: vscode.Webview, nonce: string) {
+function getWebviewHtml(
+  webview: vscode.Webview,
+  nonce: string,
+  scriptUri: vscode.Uri,
+) {
   const csp = [
     "default-src 'none';",
-    `img-src ${webview.cspSource} https: data:;`,
     "style-src 'unsafe-inline';",
-    `script-src 'nonce-${nonce}';`,
+    `img-src ${webview.cspSource} https: data:;`,
+    `script-src 'nonce-${nonce}' ${webview.cspSource};`,
   ].join(' ');
 
   return `
@@ -183,148 +273,25 @@ function getWebviewHtml(webview: vscode.Webview, nonce: string) {
       <title>Theme Switcher Settings</title>
       <style>
         :root { color-scheme: light dark; }
-        body { background: var(--vscode-editor-background); color: var(--vscode-foreground); font-family: var(--vscode-font-family, -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif); display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 12px; min-height: 100vh; }
-        .container { padding: 12px; font-size: 13px; display: flex; flex-direction: column; gap: 12px; justify-content: center; align-items: center; }
-        .row { display: grid; grid-template-columns: 1fr 1.5fr 1.5fr auto; gap: 8px; align-items: center; padding: 6px 4px; }
-        .header { font-weight: 600; color: var(--vscode-descriptionForeground); padding: 4px; }
-        .border { border: 1px solid rgba(127,127,127,.25); border-radius: 6px; }
-        .actions { margin-top: 12px; display: flex; gap: 8px; }
-        .btn { padding: 6px 10px; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; min-width: 100px; }
-        .btn-primary { background: var(--vscode-button-background); color: var(--vscode-button-foreground); }
-        .btn-primary:hover { background: var(--vscode-button-hoverBackground); }
-        .btn-secondary { background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border); }
-        .btn-danger { color: var(--vscode-errorForeground); background: transparent; }
-        input, select { background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border); border-radius: 4px; padding: 6px 8px; }
-        input[disabled], select[disabled], button[disabled] { opacity: .6; cursor: not-allowed; }
+        body { background: var(--vscode-editor-background); color: var(--vscode-foreground); font-family: var(--vscode-font-family, -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif); padding: 0px; }
       </style>
     </head>
     <body>
-      <div class="container">
-        <div style="margin-bottom:8px;">
-          <div style="font-size:32px;font-weight:600;">Theme Switcher Settings</div>
-          <div style="font-size:16px;color:var(--vscode-descriptionForeground);margin-top:8px">Configure when to apply each theme and optional icon theme.</div>
-        </div>
-
-        <div class="border" style="margin-top:12px;padding: 12px;">
-          <div class="row header">
-            <div>Time</div>
-            <div>Theme</div>
-            <div>Icon Theme (optional)</div>
-            <div></div>
-          </div>
-          <div id="rows"></div>
-        </div>
-
-        <div class="actions">
-          <button class="btn btn-primary" id="saveBtn" disabled>Save</button>
-          <button class="btn btn-secondary" id="addBtn">+ Add</button>
-        </div>
-      </div>
-
-      <div style="width: 320px;">
-        <a href="https://ko-fi.com/shyylol" target="_blank">
-          <img src="https://storage.ko-fi.com/cdn/brandasset/v2/support_me_on_kofi_dark.png?_gl=1*1673hhv*_gcl_au*NzUwMTY5NjA2LjE3NTQ3NTY5NTk.*_ga*ODU0MTQ1OTIwLjE3NTQ3NTY5NjA.*_ga_M13FZ7VQ2C*czE3NTQ3NTY5NTkkbzEkZzEkdDE3NTQ3NTg3NTkkajYwJGwwJGgw" alt="Support me on Ko-fi" />
-        </a>
-      </div>
-
-      <script nonce="${nonce}">
-        const vscode = acquireVsCodeApi();
-        let state = { themes: [], iconThemes: [], mappings: [], dirty: false };
-
-        function setDirty(d) {
-          state.dirty = d;
-          document.getElementById('saveBtn').disabled = !d;
-        }
-
-        function updateMapping(idx, patch) {
-          state.mappings[idx] = { ...state.mappings[idx], ...patch };
-          setDirty(true);
-        }
-
-        function removeMapping(idx) {
-          state.mappings.splice(idx, 1);
-          renderRows();
-          setDirty(true);
-        }
-
-        function addMapping() {
-          state.mappings.push({ time: '09:00', theme: '', iconTheme: '' });
-          renderRows();
-          setDirty(true);
-        }
-
-        function renderRows() {
-          const root = document.getElementById('rows');
-          root.innerHTML = '';
-          state.mappings.forEach((m, idx) => {
-            const row = document.createElement('div');
-            row.className = 'row';
-
-            const time = document.createElement('input');
-            time.type = 'time';
-            time.step = 60;
-            time.value = m.time || '';
-            time.addEventListener('input', (e) => updateMapping(idx, { time: e.target.value || '' }));
-
-            const theme = document.createElement('select');
-            const opt0 = document.createElement('option'); opt0.value=''; opt0.textContent='Select a theme'; theme.appendChild(opt0);
-            state.themes.forEach(t => { const o=document.createElement('option'); o.value=t.id; o.textContent=t.label; theme.appendChild(o); });
-            theme.value = (typeof m.theme === 'string' ? m.theme : m.theme?.id) || '';
-            theme.addEventListener('input', (e) => updateMapping(idx, { theme: e.target.value || '' }));
-
-            const icon = document.createElement('select');
-            const io0 = document.createElement('option'); io0.value=''; io0.textContent='None'; icon.appendChild(io0);
-            state.iconThemes.forEach(t => { const o=document.createElement('option'); o.value=t.id; o.textContent=t.label; icon.appendChild(o); });
-            icon.value = m.iconTheme || '';
-            icon.addEventListener('input', (e) => updateMapping(idx, { iconTheme: e.target.value || '' }));
-
-            const del = document.createElement('button');
-            del.className = 'btn btn-danger';
-            del.textContent = 'Remove';
-            del.title = 'Remove';
-            del.addEventListener('click', () => removeMapping(idx));
-
-            row.appendChild(time);
-            row.appendChild(theme);
-            row.appendChild(icon);
-            row.appendChild(del);
-            root.appendChild(row);
-          });
-        }
-
-        document.getElementById('saveBtn').addEventListener('click', () => {
-          const mappings = state.mappings.map(m => ({ time: m.time, theme: m.theme, ...(m.iconTheme ? { iconTheme: m.iconTheme } : {}) }));
-          vscode.postMessage({ type: 'saveMappings', mappings });
-          setDirty(false);
-        });
-
-        document.getElementById('addBtn').addEventListener('click', addMapping);
-
-        window.addEventListener('message', (event) => {
-          const msg = event.data;
-          if (!msg || typeof msg !== 'object') return;
-          if (msg.type === 'init') {
-            state.themes = Array.isArray(msg.themes) ? msg.themes : [];
-            state.iconThemes = Array.isArray(msg.iconThemes) ? msg.iconThemes : [];
-            state.mappings = Array.isArray(msg.mappings) ? msg.mappings.map(m => ({...m})) : [];
-            setDirty(false);
-            renderRows();
-          }
-        });
-
-        vscode.postMessage({ type: 'ready' });
-      </script>
-      </body>
+      <div id="root"></div>
+      <script nonce="${nonce}" src="${scriptUri}"></script>
+    </body>
     </html>
-`;
+  `;
 }
 
 function getNonce() {
-  let text = '';
   const possible =
     'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+  let text = '';
   for (let i = 0; i < 32; i++) {
     text += possible.charAt(Math.floor(Math.random() * possible.length));
   }
+
   return text;
 }

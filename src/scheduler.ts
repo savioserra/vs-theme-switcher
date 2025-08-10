@@ -3,13 +3,15 @@ import * as moment from 'moment';
 
 import * as config from './config';
 import { Subject, Observable, timer, Subscription } from 'rxjs';
+import { ensureSameDay } from './utils';
 
 export type SchedulerEvent =
-  | { type: 'theme_registered'; themes: config.Configuration[] }
+  | { type: 'init' }
+  | { type: 'cleared' }
   | { type: 'theme_applied'; name: string }
   | { type: 'icon_theme_applied'; name: string }
   | { type: 'theme_unregistered'; name: string }
-  | { type: 'cleared' };
+  | { type: 'theme_registered'; name: string };
 
 interface RegisteredTheme {
   when: Moment;
@@ -65,46 +67,24 @@ export default class Scheduler {
     this.timerSubscription = undefined;
   }
 
-  public register(...themes: config.Configuration[]): void {
-    const availableThemes = config.getAllColorThemes();
-    const availableIconThemes = config.getAllIconThemes();
+  public register(...themes: config.ValidatedMapping[]): void {
+    this.registered = [...this.registered, ...themes].sort((a, b) => {
+      return b.when.diff(a.when);
+    });
 
-    const values: RegisteredTheme[] = [];
-
-    for (const { time, theme, iconTheme } of themes) {
-      const date = moment(time, 'HH:mm');
-
-      if (!date.isValid()) {
-        this.eventsSubject.error(
-          new Error(`Invalid time format ${time} for ${theme}`),
-        );
-
-        continue;
-      }
-
-      const t = availableThemes.find((t) => t.id === theme);
-      const i = availableIconThemes.find((t) => t.id === iconTheme);
-
-      values.push({ theme: t, iconTheme: i, when: date });
-    }
-
-    this.registered = [...this.registered, ...values].sort((a, b) =>
-      b.when.diff(a.when),
-    );
-
-    this.eventsSubject.next({ type: 'theme_registered', themes });
+    themes
+      .map((t) => t.theme?.label)
+      .filter((t): t is string => !!t)
+      .forEach((label) => {
+        this.eventsSubject.next({
+          name: label,
+          type: 'theme_registered',
+        });
+      });
   }
 
   public unregisterAll(): void {
     this.registered = [];
     this.eventsSubject.next({ type: 'cleared' });
   }
-}
-
-function ensureSameDay(date: Moment, reference: Moment): Moment {
-  return date
-    .clone()
-    .year(reference.year())
-    .month(reference.month())
-    .date(reference.date());
 }
