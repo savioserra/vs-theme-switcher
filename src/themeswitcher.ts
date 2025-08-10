@@ -274,6 +274,7 @@ function getWebviewHtml(
       <style>
         :root { color-scheme: light dark; }
         body { background: var(--vscode-editor-background); color: var(--vscode-foreground); font-family: var(--vscode-font-family, -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif); padding: 0px; }
+        select, input { color: var(--vscode-foreground); background-color: var(--vscode-editor-background); }
       </style>
     </head>
     <body>
