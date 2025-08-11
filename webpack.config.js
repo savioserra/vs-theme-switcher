@@ -2,10 +2,10 @@
 
 const path = require('path');
 
-/**@type {import('webpack').Configuration}*/
-const config = {
-  target: 'node', // vscode extensions run in a Node.js-context 📖 -> https://webpack.js.org/configuration/node/
-  entry: './src/themeswitcher.ts', // the entry point of this extension, 📖 -> https://webpack.js.org/configuration/entry-context/
+/** @type {import('webpack').Configuration} */
+const nodeConfig = {
+  target: 'node',
+  entry: './src/themeswitcher.ts',
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: 'themeswitcher.js',
@@ -14,16 +14,15 @@ const config = {
   },
   devtool: 'source-map',
   externals: {
-    vscode: 'commonjs vscode', // the vscode-module is created on-the-fly and must be excluded. Add other modules that cannot be webpack'ed, 📖 -> https://webpack.js.org/configuration/externals/
+    vscode: 'commonjs vscode',
   },
   resolve: {
-    // support reading TypeScript and JavaScript files, 📖 -> https://github.com/TypeStrong/ts-loader
-    extensions: ['.ts', '.js'],
+    extensions: ['.ts', '.tsx', '.js'],
   },
   module: {
     rules: [
       {
-        test: /\.ts$/,
+        test: /\.tsx?$/,
         exclude: /node_modules/,
         use: [
           {
@@ -35,4 +34,40 @@ const config = {
   },
 };
 
-module.exports = config;
+/** @type {import('webpack').Configuration} */
+const webviewConfig = {
+  target: 'web',
+  entry: './src/webview/settings.tsx',
+  output: {
+    path: path.resolve(__dirname, 'dist', 'webview'),
+    filename: 'settings.js',
+    publicPath: '',
+  },
+  devtool: 'source-map',
+  resolve: {
+    extensions: ['.ts', '.tsx', '.js'],
+  },
+  module: {
+    rules: [
+      {
+        test: /\.css$/,
+        use: [
+          { loader: 'style-loader' },
+          { loader: 'css-loader' },
+          { loader: 'postcss-loader' },
+        ],
+      },
+      {
+        test: /\.tsx?$/,
+        exclude: /node_modules/,
+        use: [
+          {
+            loader: 'ts-loader',
+          },
+        ],
+      },
+    ],
+  },
+};
+
+module.exports = [nodeConfig, webviewConfig];

@@ -42,10 +42,14 @@ jobs:
 
       - name: Run tests (if present)
         shell: bash
+        env:
+          VSCODE_TEST: "1"
+          ELECTRON_ENABLE_STACK_DUMPING: "1"
+          ELECTRON_NO_ATTACH_CONSOLE: "1"
         run: |
           if [ -f ./out/test/runTest.js ]; then
             echo "Running VS Code tests under Xvfb..."
-            xvfb-run -a yarn test
+            xvfb-run -a --server-args="-screen 0 1280x1024x24" env VSCODE_TEST=1 yarn test
           else
             echo "No VS Code tests found. Skipping."
           fi
