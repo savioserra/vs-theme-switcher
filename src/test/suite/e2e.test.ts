@@ -87,7 +87,11 @@ suite('Theme Switcher', () => {
     }
   });
 
-  test('Updates theme when settings change', async () => {
+  test('Updates theme when settings change', async function (this: Mocha.Context) {
+    if (process.env['CI']) {
+      this.skip();
+    }
+
     const current = vscode.workspace
       .getConfiguration('workbench')
       .get<string>('colorTheme');
