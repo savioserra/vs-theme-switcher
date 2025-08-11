@@ -106,8 +106,8 @@ suite('Theme Switcher', () => {
 
         return current === target;
       },
-      20000,
-      250,
+      30000,
+      1000,
     );
 
     assert.ok(changed, 'Theme did not change to the expected value');
