@@ -36,9 +36,23 @@ export default class Scheduler {
     this.timerSubscription = timer(0, 5000).subscribe(async () => {
       const now = moment();
 
-      const target = this.registered
-        .map(({ when, ...it }) => ({ ...it, when: ensureSameDay(when, now) }))
-        .find(({ when }) => now.isSameOrAfter(when, 'minute'));
+      // Map all registered times to today and find the most recent mapping
+      const mapped = this.registered.map(({ when, ...it }) => ({
+        ...it,
+        when: ensureSameDay(when, now),
+      }));
+
+      let idx = mapped.findIndex(({ when }) => now.isSameOrAfter(when, 'minute'));
+
+      // Circular list fallback:
+      // - if no time matches (before earliest),
+      //   wrap to the last applied theme (previous day).
+      //   It's the first element in the descending list.
+      if (idx === -1 && mapped.length > 0) {
+        idx = 0;
+      }
+
+      const target = idx !== -1 ? mapped[idx] : undefined;
 
       const currentTheme = config.getCurrentTheme();
 
