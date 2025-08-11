@@ -16,15 +16,26 @@ function registerAll() {
 }
 
 export async function activate(context: vscode.ExtensionContext) {
+  const isTestEnv =
+    context.extensionMode === vscode.ExtensionMode.Test ||
+    process.env['VSCODE_TEST'];
+
   const subscription = events$.subscribe({
     next: async (event) => {
+      if (isTestEnv) {
+        console.log(
+          `[ThemeSwitcher] ${event.type}: (notification suppressed in tests)`,
+        );
+        return;
+      }
+
       switch (event.type) {
         case 'theme_applied':
         case 'icon_theme_applied': {
           const msg = {
             theme_applied: 'Theme applied',
             icon_theme_applied: 'Icon theme applied',
-          };
+          } as const;
 
           const selection = await vscode.window.showInformationMessage(
             `${msg[event.type]}: ${event.name}`,

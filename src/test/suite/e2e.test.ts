@@ -1,5 +1,8 @@
 import * as assert from 'assert';
+import { beforeEach } from 'mocha';
 import * as vscode from 'vscode';
+
+const scope = vscode.ConfigurationTarget.Global;
 
 async function waitFor<T>(
   predicate: () => Promise<T> | T,
@@ -22,20 +25,28 @@ async function waitFor<T>(
   }
 }
 
-suite('Theme Switcher E2E', () => {
-  test('Extension activates', async () => {
+suite('Theme Switcher', () => {
+  beforeEach(async () => {
+    await vscode.workspace
+      .getConfiguration('themeswitcher')
+      .update('mappings', [], scope);
+
+    await vscode.workspace
+      .getConfiguration('workbench')
+      .update('colorTheme', 'Default Light+', scope);
+
     const ext = vscode.extensions.getExtension('savioserra.theme-switcher');
+
     assert.ok(ext, 'Extension not found by id');
 
     if (!ext!.isActive) {
       await ext!.activate();
     }
-
-    assert.ok(ext!.isActive, 'Extension failed to activate');
   });
 
   test('Command is registered', async () => {
     const commands = await vscode.commands.getCommands(true);
+
     assert.ok(
       commands.includes('themeswitcher.openSettings'),
       'themeswitcher.openSettings command is not registered',
@@ -53,6 +64,7 @@ suite('Theme Switcher E2E', () => {
           const found = group.tabs.find(
             (t) => t.label === 'Theme Switcher Settings',
           );
+
           if (found) {
             return found;
           }
@@ -72,5 +84,32 @@ suite('Theme Switcher E2E', () => {
     } catch {
       // ignore if it cannot close in this environment
     }
+  });
+
+  test('Updates theme when settings change', async () => {
+    const target = 'Default Dark+';
+    const workspace = vscode.workspace.getConfiguration('themeswitcher');
+
+    // Set mapping to apply the chosen theme
+    await workspace.update(
+      'mappings',
+      [{ time: '09:00', theme: target }],
+      scope,
+    );
+
+    // Wait until workbench theme reflects the target id or label
+    const changed = await waitFor(
+      async () => {
+        const current = vscode.workspace
+          .getConfiguration('workbench')
+          .get<string>('colorTheme');
+
+        return current === target;
+      },
+      20000,
+      250,
+    );
+
+    assert.ok(changed, 'Theme did not change to the expected value');
   });
 });
