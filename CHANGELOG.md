@@ -1,5 +1,11 @@
 # Change Log
 
+## 2.3.2
+
+- Added end-to-end tests and CI improvements for stability.
+- Fix: resolve theme id vs label to ensure theme applies reliably.
+- UI: Settings webview styling improvements and select fields use VS Code colors.
+
 ## 2.3.1
 
 - Fixed: Settings page theme select now shows the saved value correctly.

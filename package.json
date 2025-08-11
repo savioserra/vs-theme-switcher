@@ -2,7 +2,7 @@
   "name": "theme-switcher",
   "displayName": "Theme Switcher",
   "description": "Choose which themes should be activated which hour!",
-  "version": "2.3.1",
+  "version": "2.3.2",
   "publisher": "savioserra",
   "icon": "assets/icon128.png",
   "repository": {
