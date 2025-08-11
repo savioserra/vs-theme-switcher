@@ -1,6 +1,7 @@
 import * as assert from 'assert';
 import { beforeEach } from 'mocha';
 import * as vscode from 'vscode';
+import { getAllColorThemes } from '../../config';
 
 const scope = vscode.ConfigurationTarget.Global;
 
@@ -87,29 +88,36 @@ suite('Theme Switcher', () => {
   });
 
   test('Updates theme when settings change', async () => {
-    const target = 'Default Dark+';
-    const workspace = vscode.workspace.getConfiguration('themeswitcher');
+    const current = vscode.workspace
+      .getConfiguration('workbench')
+      .get<string>('colorTheme');
+
+    const target = getAllColorThemes().find((t) => t.id !== current);
+
+    if (!target) {
+      throw new Error('No themes available');
+    }
+
+    const theme = target.id ?? target.label;
 
     // Set mapping to apply the chosen theme
-    await workspace.update(
-      'mappings',
-      [{ time: '09:00', theme: target }],
-      scope,
+    await vscode.workspace
+      .getConfiguration('themeswitcher')
+      .update('mappings', [{ time: '09:00', theme }], scope);
+
+    assert.ok(
+      await waitFor(
+        async () => {
+          const expected = vscode.workspace
+            .getConfiguration('workbench')
+            .get<string>('colorTheme');
+
+          return expected === theme;
+        },
+        30000,
+        1000,
+      ),
+      'Theme did not change to the expected value',
     );
-
-    // Wait until workbench theme reflects the target id or label
-    const changed = await waitFor(
-      async () => {
-        const current = vscode.workspace
-          .getConfiguration('workbench')
-          .get<string>('colorTheme');
-
-        return current === target;
-      },
-      30000,
-      1000,
-    );
-
-    assert.ok(changed, 'Theme did not change to the expected value');
   });
 });
