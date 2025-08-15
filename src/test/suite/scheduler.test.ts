@@ -1,3 +1,4 @@
+/* eslint-disable */
 import * as assert from 'assert';
 import * as moment from 'moment';
 import Scheduler from '../../scheduler';
