@@ -43,7 +43,10 @@ suite('Scheduler (unit)', () => {
       applied.push(id);
     };
 
-    (config as any).getCurrentTheme = () => ({ theme: 'initial', iconTheme: undefined });
+    (config as any).getCurrentTheme = () => ({
+      theme: 'initial',
+      iconTheme: undefined,
+    });
 
     const scheduler = new Scheduler();
 
@@ -85,7 +88,11 @@ suite('Scheduler (unit)', () => {
 
     scheduler.stop();
 
-    assert.strictEqual(result, 'theme-past', 'Should apply the most recent mapping before now (11:00)');
+    assert.strictEqual(
+      result,
+      'theme-past',
+      'Should apply the most recent mapping before now (11:00)',
+    );
   });
 
   test('wraps to last mapping when before earliest time (circular list)', async () => {
@@ -98,7 +105,10 @@ suite('Scheduler (unit)', () => {
       applied.push(id);
     };
 
-    (config as any).getCurrentTheme = () => ({ theme: 'initial', iconTheme: undefined });
+    (config as any).getCurrentTheme = () => ({
+      theme: 'initial',
+      iconTheme: undefined,
+    });
 
     const scheduler = new Scheduler();
 
