@@ -1,5 +1,9 @@
 # Change Log
 
+## 2.3.3
+
+- Fixed an issue where theme was not found
+
 ## 2.3.2
 
 - Added end-to-end tests and CI improvements for stability.
