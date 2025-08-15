@@ -42,7 +42,9 @@ export default class Scheduler {
         when: ensureSameDay(when, now),
       }));
 
-      let idx = mapped.findIndex(({ when }) => now.isSameOrAfter(when, 'minute'));
+      let idx = mapped.findIndex(({ when }) =>
+        now.isSameOrAfter(when, 'minute'),
+      );
 
       // Circular list fallback:
       // - if no time matches (before earliest),
