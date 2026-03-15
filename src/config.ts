@@ -81,13 +81,19 @@ export function getUtcOffset() {
 export function getAllColorThemes() {
   return vscode.extensions.all
     .flatMap((ext) => ext.packageJSON?.contributes?.themes ?? [])
-    .map((theme) => ({ label: theme.label as string, id: theme.id as string }));
+    .map((theme) => ({
+      label: theme.label as string,
+      id: (theme.id ?? theme.label) as string,
+    }));
 }
 
 export function getAllIconThemes() {
   return vscode.extensions.all
     .flatMap((ext) => ext.packageJSON?.contributes?.iconThemes ?? [])
-    .map((theme) => ({ label: theme.label as string, id: theme.id as string }));
+    .map((theme) => ({
+      label: theme.label as string,
+      id: (theme.id ?? theme.label) as string,
+    }));
 }
 export async function save({ mappings }: Settings) {
   await vscode.workspace
