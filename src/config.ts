@@ -100,3 +100,8 @@ export async function save({ mappings }: Settings) {
     .getConfiguration(SESSION_NAME)
     .update('mappings', mappings, vscode.ConfigurationTarget.Global);
 }
+export async function save({ mappings }: Settings) {
+  await vscode.workspace
+    .getConfiguration(SESSION_NAME)
+    .update('mappings', mappings, vscode.ConfigurationTarget.Global);
+}
