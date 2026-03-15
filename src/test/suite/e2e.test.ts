@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import { beforeEach } from 'mocha';
 import * as vscode from 'vscode';
-import { getAllColorThemes } from '../../config';
+import { getAllColorThemes, getAllIconThemes } from '../../config';
 
 const scope = vscode.ConfigurationTarget.Global;
 
@@ -52,6 +52,29 @@ suite('Theme Switcher', () => {
       commands.includes('themeswitcher.openSettings'),
       'themeswitcher.openSettings command is not registered',
     );
+  });
+
+  test('All discovered themes have a valid id', () => {
+    const colorThemes = getAllColorThemes();
+    const iconThemes = getAllIconThemes();
+
+    for (const theme of colorThemes) {
+      assert.ok(theme.id, `Color theme "${theme.label}" has no id`);
+      assert.notStrictEqual(
+        theme.id,
+        'undefined',
+        `Color theme "${theme.label}" has 'undefined' as id`,
+      );
+    }
+
+    for (const theme of iconThemes) {
+      assert.ok(theme.id, `Icon theme "${theme.label}" has no id`);
+      assert.notStrictEqual(
+        theme.id,
+        'undefined',
+        `Icon theme "${theme.label}" has 'undefined' as id`,
+      );
+    }
   });
 
   test('Open Settings webview shows a tab', async () => {

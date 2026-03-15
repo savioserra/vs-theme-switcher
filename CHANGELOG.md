@@ -6,6 +6,7 @@
 
 ## 2.3.2
 
+- Fixed: Theme matching for themes without an explicit `id` in their extension manifest. Themes that only define a `label` are now correctly identified and matched.
 - Added end-to-end tests and CI improvements for stability.
 - Fix: resolve theme id vs label to ensure theme applies reliably.
 - UI: Settings webview styling improvements and select fields use VS Code colors.
