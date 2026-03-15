@@ -1,5 +1,9 @@
 # Change Log
 
+## 2.3.2
+
+- Fixed: Theme matching for themes without an explicit `id` in their extension manifest. Themes that only define a `label` are now correctly identified and matched.
+
 ## 2.3.1
 
 - Fixed: Settings page theme select now shows the saved value correctly.
